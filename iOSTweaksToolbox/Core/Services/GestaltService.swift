@@ -81,6 +81,28 @@ enum GestaltService {
 
     // MARK: - 写入
 
+    /// 明确禁止写入的键。这些是社区实测会导致开机缓存重置、
+    /// 基带/Wi-Fi 死锁或软砖的项，任何一个都不放过。
+    static let blockedKeys: [String: String] = [
+        "zHeENZu+wbg7PUprwNwBWg": "RegionInfo —— iOS 27 上的非缓存键，注入会触发开机缓存合法性校验整包重置",
+        "0L5PkT61qoH1b/B1USWqjQ": "RegionalBehaviorChinaBrick —— 非缓存硬件键，写入会导致开机重置",
+        "gD8SNRcHQeIxCAvsp+2vjA": "WSKU —— 无线电射频校准数据，篡改可致 Wi-Fi/蓝牙瘫痪",
+        "sFTm4FEVKVfdZ0ChdwQY1g": "WifiAntennaSKUVersion —— 天线校准参数",
+        "91LyMcx4z1w3SGVeqteMnA": "BasebandRegionSKU —— 基带射频参数，篡改可致基带死锁",
+        "iyfxmLogGVIaH7aEgqwcIA": "green-tea —— 属于 CacheData 二进制槽位，不能塞进 CacheExtra",
+        "4snMZS8LJkSctKypt2m+xA": "not-green-tea —— 属于 CacheData 二进制槽位",
+        "hiHut/WR+B9Lx/vd0WyeNg": "wapi —— 属于 CacheData 二进制槽位",
+        "green-tea": "green-tea —— 明文冲突键",
+        "not-green-tea": "not-green-tea —— 明文冲突键",
+        "wapi": "wapi —— 明文冲突键",
+        "uKc7FPnEO++lVhHWHFlGbQ": "iPad 设备模式 —— 与台前调度叠加会导致白苹果循环",
+        "CacheData": "顶层系统保留字段",
+        "CacheUUID": "顶层系统保留字段",
+        "CacheVersion": "顶层系统保留字段"
+    ]
+
+    static func blockedReason(for key: String) -> String? { blockedKeys[key] }
+
     enum WriteError: LocalizedError {
         case emptyPayload
         case noOriginal
@@ -101,6 +123,15 @@ enum GestaltService {
             case .syncFailed(let e): return "F_FULLFSYNC 落盘失败 (errno=\(e))"
             case .verifyFailed: return "写后读回校验不一致，已回滚"
             case .invalidPlist(let reason): return "数据不是合法 plist：\(reason)"
+            }
+        }
+    }
+
+    /// 写入前检查待改键是否落在黑名单里。
+    static func checkEdits(_ edits: [String: Any]) throws {
+        for key in edits.keys {
+            if let reason = blockedReason(for: key) {
+                throw WriteError.invalidPlist("拒绝写入 (key)：(reason)")
             }
         }
     }

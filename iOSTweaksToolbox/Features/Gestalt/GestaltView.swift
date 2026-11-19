@@ -223,6 +223,12 @@ struct GestaltView: View {
     }
 
     private func apply() {
+        do {
+            try GestaltService.checkEdits(pendingEdits)
+        } catch {
+            app.log.fail("写入被拦截：\(error.localizedDescription)")
+            return
+        }
         guard let snapshot, var dict = GestaltService.parse(snapshot.data) else { return }
         var extra = (dict["CacheExtra"] as? [String: Any]) ?? [:]
         for (key, value) in pendingEdits { extra[key] = value }
@@ -283,6 +289,14 @@ struct GestaltEditView: View {
                 KeyValueRow(key: "键名", value: row.key, mono: true)
                 KeyValueRow(key: "当前值", value: row.value)
             }
+            if let reason = GestaltService.blockedReason(for: row.key) {
+                Section {
+                    Text("该键已被锁定，本工具不会写入。\n\(reason)")
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
+            }
+
             Section("新值") {
                 Picker("类型", selection: $kind) {
                     ForEach(Kind.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -305,6 +319,7 @@ struct GestaltEditView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("设为待写入") {
+                    guard GestaltService.blockedReason(for: row.key) == nil else { dismiss(); return }
                     switch kind {
                     case .boolean: onCommit(row.key, boolValue ? 1 : 0)
                     case .integer: onCommit(row.key, Int(intValue) ?? 0)
@@ -312,6 +327,7 @@ struct GestaltEditView: View {
                     }
                     dismiss()
                 }
+                .disabled(GestaltService.blockedReason(for: row.key) != nil)
             }
         }
         .onAppear {
