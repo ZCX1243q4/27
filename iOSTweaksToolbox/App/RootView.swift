@@ -34,6 +34,7 @@ struct RootView: View {
         case .displayLab: DisplayLabView()
         case .aodLab: AODLabView()
         case .gestalt: GestaltView()
+        case .nfc: NFCView()
         case .deviceIdentity: DeviceIdentityView()
         case .fileManager: FileBrowserView()
         case .backup: BackupCenterView()

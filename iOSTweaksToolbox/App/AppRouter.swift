@@ -20,6 +20,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
     case displayLab
     case aodLab
     case gestalt
+    case nfc
     case deviceIdentity
     case fileManager
     case backup
@@ -39,6 +40,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .displayLab: return "显示分辨率实验室"
         case .aodLab: return "AOD 实验室"
         case .gestalt: return "MobileGestalt 缓存"
+        case .nfc: return "NFC 卡片"
         case .deviceIdentity: return "设备身份管理"
         case .fileManager: return "文件管理器"
         case .backup: return "备份与恢复"
@@ -58,6 +60,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .displayLab: return "读取真实屏幕参数，建立自定义显示方案"
         case .aodLab: return "AOD 开关前后行为记录与配置差异诊断"
         case .gestalt: return "系统能力缓存：读取、备份、键值编辑与安全写入"
+        case .nfc: return "读取卡片 UID 与 NDEF 内容并导出"
         case .deviceIdentity: return "按 App 记录目标设备身份（研究用配置）"
         case .fileManager: return "沙盒、App Group 与用户授权目录"
         case .backup: return "SHA-256 校验、快照与恢复"
@@ -77,6 +80,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .displayLab: return "rectangle.on.rectangle"
         case .aodLab: return "moon.stars"
         case .gestalt: return "slider.horizontal.3"
+        case .nfc: return "sensor.tag.radiowaves.forward"
         case .deviceIdentity: return "person.badge.key"
         case .fileManager: return "folder"
         case .backup: return "arrow.triangle.2.circlepath"
@@ -91,7 +95,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .configurationEditor, .profileManager, .jsonEditor, .hexEditor,
              .dynamicIsland, .displayLab, .aodLab, .gestalt, .deviceIdentity:
             return .p0
-        case .fileManager, .backup, .deviceInfo:
+        case .fileManager, .backup, .deviceInfo, .nfc:
             return .p1
         case .diagnostics, .capabilities:
             return .p2

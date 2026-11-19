@@ -216,6 +216,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yg.iostweakstoolbox;
 				INFOPLIST_KEY_AppGroups = "group.com.yg.iostweakstoolbox";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "读取 NFC 卡片的 UID 与 NDEF 内容，便于分析卡片结构。";
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = nfc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -250,6 +252,8 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yg.iostweakstoolbox;
 				INFOPLIST_KEY_AppGroups = "group.com.yg.iostweakstoolbox";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "读取 NFC 卡片的 UID 与 NDEF 内容，便于分析卡片结构。";
+				INFOPLIST_KEY_UIRequiredDeviceCapabilities = nfc;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
