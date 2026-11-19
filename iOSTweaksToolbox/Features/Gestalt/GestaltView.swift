@@ -192,6 +192,14 @@ struct GestaltView: View {
         app.log.append(.success, "读取 MobileGestalt：\(snap.size) 字节，\(keys.count) 个已知键")
     }
 
+    private func confirmRespring() {
+        Support.confirm(title: "需要注销才生效",
+                        message: "MobileGestalt 缓存已被 SpringBoard 读进内存。是否现在注销？",
+                        destructive: "立即注销") {
+            app.respring("MobileGestalt 写入")
+        }
+    }
+
     private func backupOriginal() {
         guard let snapshot else { return }
         do {
@@ -242,8 +250,9 @@ struct GestaltView: View {
         do {
             try GestaltService.writeInPlace(data, to: URL(fileURLWithPath: MGPath.systemGestalt))
             pendingEdits.removeAll()
-            app.log.append(.success, "已写入并校验通过，重启设备后生效")
+            app.log.append(.success, "已写入并校验通过")
             load()
+            confirmRespring()
         } catch {
             app.log.append(.error, "写入失败：\(error.localizedDescription)")
         }

@@ -170,8 +170,9 @@ struct AODFixView: View {
                                                             note: "AOD 双击唤醒修复")
             savePreApply(before)
             append("已写入：TapToWake = 1" + (removals.isEmpty ? "" : "，并移除 AODVibrancy"))
-            append("请重启设备后验证息屏双击")
+            append("请注销或重启后验证息屏双击")
             refresh()
+            confirmRespring()
         } catch {
             append("写入失败：\(error.localizedDescription)")
         }
@@ -189,6 +190,7 @@ struct AODFixView: View {
             savePreApply(before)
             append("已写入：TapToWake = 1（未改动 AOD 键）")
             refresh()
+            confirmRespring()
         } catch {
             append("写入失败：\(error.localizedDescription)")
         }
@@ -214,6 +216,14 @@ struct AODFixView: View {
             refresh()
         } catch {
             append("还原失败：\(error.localizedDescription)")
+        }
+    }
+
+    private func confirmRespring() {
+        Support.confirm(title: "需要注销才生效",
+                        message: "轻点唤醒与 AOD 的判定在 SpringBoard 启动时读取。是否现在注销？",
+                        destructive: "立即注销") {
+            app.respring("AOD 双击唤醒修复")
         }
     }
 

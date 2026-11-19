@@ -119,6 +119,16 @@ struct AODLabView: View {
                 }
             }
 
+            Section {
+                Button {
+                    app.respring("AOD 测试对照")
+                } label: {
+                    Label("立即注销（免越狱）", systemImage: "arrow.clockwise.circle")
+                }
+            } footer: {
+                Text("注销会让 SpringBoard 重新读取 MobileGestalt 缓存，无需整机重启。原理是把一个极端耗显存的页面渲染到 SpringBoard 崩溃重启，不写任何系统文件。")
+            }
+
             Section("不可采集项（未越狱）") {
                 KeyValueRow(key: "系统息屏事件", value: "不可采集")
                 KeyValueRow(key: "锁屏双击触摸事件", value: "不可采集")

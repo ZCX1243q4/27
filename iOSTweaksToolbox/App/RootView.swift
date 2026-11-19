@@ -15,6 +15,7 @@ struct RootView: View {
                     destination(for: module)
                 }
         }
+        .respringOverlay($app.shouldRespring)
     }
 
     @ViewBuilder
