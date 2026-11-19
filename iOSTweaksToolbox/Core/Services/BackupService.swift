@@ -38,6 +38,9 @@ final class BackupService: ObservableObject {
 
     @discardableResult
     func snapshot(url: URL, note: String? = nil) throws -> BackupRecord {
+        guard FileManager.default.isReadableFile(atPath: url.path) else {
+            throw ToolboxError.parseFailed("文件不可读，无法创建快照")
+        }
         let data = try Data(contentsOf: url, options: .mappedIfSafe)
         let digest = Hashing.sha256(data)
         let id = "\(EventLog.stamp())-\(digest.prefix(8))"
@@ -78,6 +81,7 @@ final class BackupService: ObservableObject {
     @discardableResult
     func restore(_ record: BackupRecord) throws -> BackupRecord? {
         let target = URL(fileURLWithPath: record.originalPath)
+        try PathGuard.check(target.path)
         var safety: BackupRecord?
         if fm.fileExists(atPath: target.path) {
             safety = try snapshot(url: target, note: "恢复 \(record.id) 之前")
@@ -132,7 +136,7 @@ enum ToolboxError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .checksumMismatch(let id): return "校验失败：快照 \(id) 的内容与登记哈希不一致"
-        case .notWritable(let path): return "不可写：\(path)"
+        case .notWritable(let reason): return "写入被拒绝：\(reason)"
         case .parseFailed(let reason): return "解析失败：\(reason)"
         case .unsupportedType(let type): return "不支持的类型：\(type)"
         case .cancelled: return "已取消"

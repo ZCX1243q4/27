@@ -251,6 +251,7 @@ struct HexWorkspaceView: View {
 
 enum BackupServiceSnapshotHelper {
     static func snapshotAndWrite(data: Data, to url: URL, backups: BackupService) throws {
+        try PathGuard.check(url.path)
         let snapshot = FileManager.default.fileExists(atPath: url.path)
             ? try backups.snapshot(url: url, note: "Hex 写入前快照") : nil
         do {

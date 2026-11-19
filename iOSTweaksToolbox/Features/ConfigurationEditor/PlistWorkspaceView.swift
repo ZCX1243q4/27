@@ -111,6 +111,7 @@ struct PlistWorkspaceView: View {
         case .success(let urls):
             for url in urls {
                 let scoped = url.startAccessingSecurityScopedResource()
+                if scoped { PathGuard.registerGrantedRoot(url) }
                 defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                 let destination = app.workspace.imports.appendingPathComponent(url.lastPathComponent)
                 do {

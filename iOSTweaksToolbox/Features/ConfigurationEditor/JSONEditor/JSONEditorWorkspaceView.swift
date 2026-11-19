@@ -144,6 +144,7 @@ struct JSONEditorWorkspaceView: View {
         guard let currentURL else { return }
         guard validate() else { return }
         do {
+            try PathGuard.check(currentURL.path)
             guard let data = text.data(using: .utf8) else { return }
             try data.write(to: currentURL, options: .atomic)
             app.log.append(.success, "JSON 已保存：\(currentURL.path)")

@@ -84,6 +84,7 @@ enum PlistService {
                      to url: URL,
                      format: PlistFormat,
                      backups: BackupService) throws {
+        try PathGuard.check(url.path)
         let data = try serialize(object, format: format)
         let existing = FileManager.default.fileExists(atPath: url.path)
         var snapshot: BackupRecord?

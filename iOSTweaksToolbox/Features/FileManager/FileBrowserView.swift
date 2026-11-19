@@ -63,6 +63,7 @@ struct FileBrowserView: View {
             case .success(let urls):
                 if let url = urls.first {
                     let scoped = url.startAccessingSecurityScopedResource()
+                    if scoped { PathGuard.registerGrantedRoot(url) }
                     open(url)
                     if scoped { app.log.append(.info, "已获得授权目录访问：\(url.path)") }
                 }
@@ -125,6 +126,17 @@ struct FileBrowserView: View {
     }
 
     private func delete(_ meta: FileMeta) {
+        if let reason = PathGuard.denyReason(for: meta.path) {
+            errorText = reason
+            app.log.append(.warning, "删除被拒绝：\(reason)")
+            return
+        }
+        Support.confirm(title: "删除 \(meta.name)？", message: "删除后不可从系统回收站恢复。") {
+            performDelete(meta)
+        }
+    }
+
+    private func performDelete(_ meta: FileMeta) {
         do {
             try FileManager.default.removeItem(at: meta.url)
             app.log.append(.success, "已删除：\(meta.path)")
