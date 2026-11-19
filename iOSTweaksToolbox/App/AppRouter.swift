@@ -120,7 +120,6 @@ final class AppState: ObservableObject {
     let identityStore: IdentityStore
     let aod: AODLabService
     let capabilities: CapabilityRegistry
-    let deviceInfo: DeviceInfoService
 
     @Published var bootstrapped = false
     @Published var path: [AppModule] = []
@@ -134,7 +133,6 @@ final class AppState: ObservableObject {
         self.identityStore = IdentityStore(workspace: workspace)
         self.aod = AODLabService(workspace: workspace)
         self.capabilities = CapabilityRegistry(workspace: workspace)
-        self.deviceInfo = DeviceInfoService()
         self.backups.attachLog(log)
         AppLogger.shared.sink = log
         forwardChanges()
