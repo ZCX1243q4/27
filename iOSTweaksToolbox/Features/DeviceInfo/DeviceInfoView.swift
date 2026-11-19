@@ -40,7 +40,7 @@ struct DeviceInfoView: View {
             }
         }
         .navigationTitle("设备信息")
-        .task { report = DeviceInfoService.report() }
+        .onAppear { report = DeviceInfoService.report() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

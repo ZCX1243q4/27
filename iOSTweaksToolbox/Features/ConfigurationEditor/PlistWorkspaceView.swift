@@ -69,7 +69,7 @@ struct PlistWorkspaceView: View {
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             handleImport(result)
         }
-        .task { refresh() }
+        .onAppear { refresh() }
     }
 
     @ViewBuilder

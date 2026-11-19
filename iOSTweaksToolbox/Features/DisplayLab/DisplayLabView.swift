@@ -93,7 +93,7 @@ struct DisplayLabView: View {
             }
         }
         .navigationTitle("显示分辨率实验室")
-        .task {
+        .onAppear {
             let snap = DisplayService.snapshot()
             snapshot = snap
             logicalWidth = snap.boundsWidth

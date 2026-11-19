@@ -72,7 +72,7 @@ struct DeviceIdentityView: View {
             }
         }
         .navigationTitle("设备身份管理")
-        .task { real = IdentityStore.realIdentity() }
+        .onAppear { real = IdentityStore.realIdentity() }
         .sheet(item: $editing) { target in
             NavigationStack {
                 IdentityEditView(target: target) { updated in
@@ -172,7 +172,7 @@ struct IdentityEditView: View {
                 .disabled(target.bundleID.isEmpty)
             }
         }
-        .task {
+        .onAppear {
             real = IdentityStore.realIdentity()
             refresh()
         }

@@ -47,7 +47,7 @@ struct HexWorkspaceView: View {
         }
         .navigationTitle(currentURL?.lastPathComponent ?? "Hex 编辑器")
         .navigationBarTitleDisplayMode(.inline)
-        .task { if let initialURL { load(initialURL) } }
+        .onAppear { if let initialURL { load(initialURL) } }
     }
 
     private var controls: some View {

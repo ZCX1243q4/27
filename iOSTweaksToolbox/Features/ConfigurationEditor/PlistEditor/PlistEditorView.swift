@@ -38,7 +38,7 @@ struct PlistEditorView: View {
         }
         .navigationTitle(url.lastPathComponent)
         .navigationBarTitleDisplayMode(.inline)
-        .task { load() }
+        .onAppear { load() }
         .toolbar { toolbar }
         .sheet(item: Binding(get: { pendingDiff.map { DiffPayload(items: $0) } },
                              set: { if $0 == nil { pendingDiff = nil; pendingObject = nil } })) { payload in
