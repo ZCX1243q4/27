@@ -12,6 +12,9 @@ enum PathGuard {
     /// 唯一被允许经 worse_query 令牌写入的系统文件。
     static let mobileGestaltPath = "/private/var/containers/Shared/SystemGroup/systemgroup.com.apple.mobilegestaltcache/Library/Caches/com.apple.MobileGestalt.plist"
 
+    /// 允许经令牌写入的另一条受控路径（分辨率画布）。
+    static let resolutionPath = "/var/Managed Preferences/mobile/com.apple.iokit.IOMobileGraphicsFamily.plist"
+
     /// 无论权限如何都不允许写入的系统区域。
     static let protectedPrefixes: [String] = [
         "/System",
@@ -54,7 +57,8 @@ enum PathGuard {
 
     static func isProtected(_ path: String) -> Bool {
         let value = canonical(path)
-        if value == mobileGestaltPath { return false }   // 受控例外：需先持有 worse_query 令牌
+        if value == mobileGestaltPath { return false }    // 受控例外：需先持有 worse_query 令牌
+        if value == resolutionPath { return false }       // 同上
         for prefix in protectedPrefixes {
             if value == prefix || value.hasPrefix(prefix + "/") { return true }
         }

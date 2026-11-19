@@ -46,12 +46,22 @@ struct DisplayLabView: View {
 
             Section {
                 NavigationLink {
+                    ResolutionChangerView()
+                } label: {
+                    Label("修改全局分辨率（真实写入）", systemImage: "arrow.up.left.and.arrow.down.right")
+                }
+            } footer: {
+                Text("写 IOMobileGraphicsFamily 的画布尺寸，这是 iOS 显示服务启动时读取的值。重启后生效。")
+            }
+
+            Section {
+                NavigationLink {
                     ScreenGeometryView()
                 } label: {
                     Label("修改屏幕几何档位", systemImage: "rectangle.inset.filled")
                 }
             } footer: {
-                Text("这是未越狱环境下唯一能真实落地的显示几何改动。它改的是系统认为的机型几何档位，不是物理像素——物理分辨率由显示硬件固定，任何软件都改不了。")
+                Text("改 ArtworkTraits 的 SubType，影响系统对屏幕形状的判断。")
             }
 
             Section {
