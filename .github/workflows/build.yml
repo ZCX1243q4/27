@@ -1,0 +1,58 @@
+name: Build IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodebuild -list -project iOSTweaksToolbox.xcodeproj
+
+      - name: Build (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project iOSTweaksToolbox.xcodeproj \
+            -scheme iOSTweaksToolbox \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build | tee build.log
+
+      - name: Package IPA
+        run: |
+          APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "app: $APP"
+          mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qry iOSTweaksToolbox.ipa Payload
+          ls -lh iOSTweaksToolbox.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOSTweaksToolbox-ipa
+          path: iOSTweaksToolbox.ipa
+          if-no-files-found: error
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
