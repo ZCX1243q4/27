@@ -38,7 +38,12 @@ struct IslandStudioView: View {
                 Text("该预览只在本 App 的窗口内绘制。它不会改变 SpringBoard 的真实灵动岛。")
             }
 
-            Section("参数") {
+            Section {
+                Text("下面这组数值没有对应的系统字段：iOS 的 MobileGestalt 里不存在「灵动岛宽度 / 高度 / 圆角 / 横向偏移」这类键，SpringBoard 的灵动岛尺寸是由屏幕几何档位推算的。所以它们只能用于推演，不能写进系统。")
+                    .font(.footnote).foregroundStyle(.orange)
+            }
+
+            Section("预览参数（无系统字段，不可写入）") {
                 slider("水平偏移", value: $config.horizontalOffset, range: -40...40, unit: "pt")
                 slider("垂直偏移", value: $config.verticalOffset, range: -30...30, unit: "pt")
                 slider("宽度", value: $config.width, range: 80...200, unit: "pt")
