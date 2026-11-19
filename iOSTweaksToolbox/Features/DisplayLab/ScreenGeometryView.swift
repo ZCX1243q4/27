@@ -25,7 +25,7 @@ struct ScreenGeometryView: View {
             }
 
             Section {
-                ForEach(GeometryPreset.all) { preset in
+                ForEach(GeometryPresets.all) { preset in
                     Button {
                         target = String(preset.subtype)
                     } label: {
@@ -39,6 +39,7 @@ struct ScreenGeometryView: View {
                             Spacer()
                             Text(String(preset.subtype))
                                 .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(current == preset.subtype ? Color.green : Color.primary)
                             if current == preset.subtype {
                                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
                             }
@@ -107,7 +108,6 @@ struct ScreenGeometryView: View {
         }
     }
 }
-
 struct GeometryPreset: Identifiable {
     var id: Int { subtype }
     var subtype: Int
@@ -116,25 +116,23 @@ struct GeometryPreset: Identifiable {
     var note: String
 }
 
-enum GeometryPreset {
+enum GeometryPresets {
     static let all: [GeometryPreset] = [
         GeometryPreset(subtype: 2436, name: "iPhone X / 11 Pro 几何",
-                       logical: "375×812 @3x", note: "刘海，5.8\""),
+                       logical: "375×812 @3x", note: "刘海，5.8寸"),
         GeometryPreset(subtype: 2532, name: "iPhone 12/13/14 几何",
-                       logical: "390×844 @3x", note: "刘海，6.1\""),
+                       logical: "390×844 @3x", note: "刘海，6.1寸"),
         GeometryPreset(subtype: 2340, name: "iPhone 12 mini 几何",
-                       logical: "375×812 @3x", note: "刘海，5.4\""),
+                       logical: "375×812 @3x", note: "刘海，5.4寸"),
         GeometryPreset(subtype: 2778, name: "iPhone 12/13 Pro Max 几何",
-                       logical: "428×926 @3x", note: "刘海，6.7\""),
+                       logical: "428×926 @3x", note: "刘海，6.7寸"),
         GeometryPreset(subtype: 2556, name: "iPhone 14 Pro / 15 / 16 几何",
-                       logical: "393×852 @3x", note: "灵动岛，6.1\""),
+                       logical: "393×852 @3x", note: "灵动岛，6.1寸"),
         GeometryPreset(subtype: 2796, name: "iPhone 15 Pro Max 几何",
-                       logical: "430×932 @3x", note: "灵动岛，6.7\""),
+                       logical: "430×932 @3x", note: "灵动岛，6.7寸"),
         GeometryPreset(subtype: 2622, name: "iPhone 16 Pro 几何",
-                       logical: "402×874 @3x", note: "灵动岛，6.3\""),
+                       logical: "402×874 @3x", note: "灵动岛，6.3寸"),
         GeometryPreset(subtype: 2868, name: "iPhone 16 Pro Max 几何",
-                       logical: "440×956 @3x", note: "灵动岛，6.9\""),
-        GeometryPreset(subtype: 2622, name: "iPhone 16e 几何（原生档位参考）",
-                       logical: "390×844 @3x", note: "60Hz OLED，无 LTPO")
+                       logical: "440×956 @3x", note: "灵动岛，6.9寸")
     ]
 }
