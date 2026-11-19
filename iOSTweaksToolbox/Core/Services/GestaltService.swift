@@ -111,6 +111,7 @@ enum GestaltService {
         case truncateFailed(Int32)
         case syncFailed(Int32)
         case verifyFailed
+        case metadataChanged
         case invalidPlist(String)
 
         var errorDescription: String? {
@@ -122,6 +123,7 @@ enum GestaltService {
             case .truncateFailed(let e): return "尾部截断失败 (errno=\(e))"
             case .syncFailed(let e): return "F_FULLFSYNC 落盘失败 (errno=\(e))"
             case .verifyFailed: return "写后读回校验不一致，已回滚"
+            case .metadataChanged: return "写入破坏了 inode/属主/权限（这会让系统在重启后重建缓存），已回滚"
             case .invalidPlist(let reason): return "数据不是合法 plist：\(reason)"
             }
         }
@@ -143,6 +145,20 @@ enum GestaltService {
         for (key, value) in edits { extra[key] = value }
         for key in removals { extra.removeValue(forKey: key) }
         dict["CacheExtra"] = extra
+
+        // 只有 CacheExtra 允许变，其余顶层键（CacheVersion / CacheUUID / CacheData …）
+        // 必须完全一致。任何一处被改动都会让 mobilegestaltd 判定缓存非法并整份重建。
+        let baseline = parse(before) ?? [:]
+        for key in baseline.keys where key != "CacheExtra" {
+            guard let lhs = baseline[key] as? NSObject,
+                  let rhs = dict[key] as? NSObject,
+                  lhs.isEqual(rhs) else {
+                throw WriteError.invalidPlist("顶层键 (key) 在重组后发生变化，已拦截写入")
+            }
+        }
+        guard baseline.keys.count == dict.keys.count else {
+            throw WriteError.invalidPlist("顶层键数量从 (baseline.keys.count) 变为 \(dict.keys.count)，已拦截写入")
+        }
 
         guard let after = try? PropertyListSerialization.data(fromPropertyList: dict,
                                                               format: .binary,
@@ -244,9 +260,14 @@ enum GestaltService {
     }
 
     /// 原位覆盖写入：不先 ftruncate(0)，保留 inode / 属主 / 权限。
+    /// 写入前后比对 st_ino / st_uid / st_gid / st_mode，任何一项变了都回滚——
+    /// 这三项被破坏时系统会在重启后丢弃并重建整份缓存，表现为"改了又自己变回去"。
     static func writeInPlace(_ data: Data, to url: URL) throws {
         try validate(data)
         guard let original = try? Data(contentsOf: url) else { throw WriteError.noOriginal }
+
+        var before = stat()
+        guard stat(url.path, &before) == 0 else { throw WriteError.openFailed(errno) }
 
         let fd = url.path.withCString { open($0, O_RDWR | O_CLOEXEC | O_NOFOLLOW) }
         guard fd >= 0 else { throw WriteError.openFailed(errno) }
@@ -261,6 +282,16 @@ enum GestaltService {
             guard lseek(fd, 0, SEEK_SET) == 0 else { throw WriteError.verifyFailed }
             let readback = try readAll(fd)
             guard readback == data else { throw WriteError.verifyFailed }
+
+            // inode / 属主 / 权限必须原样保留，否则重启后系统会重建缓存
+            var after = stat()
+            guard stat(url.path, &after) == 0,
+                  after.st_ino == before.st_ino,
+                  after.st_uid == before.st_uid,
+                  after.st_gid == before.st_gid,
+                  (after.st_mode & 0o7777) == (before.st_mode & 0o7777) else {
+                throw WriteError.metadataChanged
+            }
         } catch {
             // 回滚
             _ = try? pwriteAll(fd, original)

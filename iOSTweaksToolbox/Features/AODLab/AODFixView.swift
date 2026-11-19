@@ -69,14 +69,14 @@ struct AODFixView: View {
                 Button {
                     applyFix()
                 } label: {
-                    Label("执行修复：轻点唤醒置 1，清除 AOD 鲜艳度", systemImage: "wrench.adjustable")
+                    Label("执行修复：写入 AOD + 时间 + 鲜艳度 + 轻点唤醒", systemImage: "wrench.adjustable")
                 }
                 .disabled(busy || values.isEmpty)
 
                 Button {
                     applyMinimal()
                 } label: {
-                    Label("保守修复：只置轻点唤醒 = 1", systemImage: "1.circle")
+                    Label("保守修复：只开 AOD + 轻点唤醒", systemImage: "1.circle")
                 }
                 .disabled(busy || values.isEmpty)
 
@@ -116,13 +116,13 @@ struct AODFixView: View {
 
     private var explanation: String {
         """
-        这份缓存（com.apple.MobileGestalt.plist 的 CacheExtra）是 iOS 用来回答「这台设备支持什么」的唯一数据源。你之前强开 AOD 时，它被改成了支持 AOD —— 但 AOD 是「显示屏常亮低功耗模式」，而 iPhone 16e 本身没有 AOD 硬件管线，系统进入 AOD 状态后，锁屏的空闲计时器仍按「屏幕已常亮」判断，于是息屏后的轻点/双击唤醒路径就不会被触发。
+        这份缓存（com.apple.MobileGestalt.plist 的 CacheExtra）是 iOS 用来回答「这台设备支持什么」的数据源。
 
-        更具体地说，问题通常出在两处之一：
-        1. DeviceSupportsTapToWake（yZf3GTRMGTuwSV/lD7Cagw）被连带写成了 0 或缺失，系统认为这台机器不支持轻点唤醒；
-        2. AOD 相关键（AOD / AODTime / AODVibrancy）与硬件不匹配，系统进入了无法被触摸唤醒的显示状态。
+        你遇到的「开了 AOD，注销后又变回关闭」不是注销造成的，而是**键不完整**：AOD 在系统里是一组互锁的开关，只有 AOD（2OOJf1VhaM7NxfRok3HbWQ）一个键为 1 时，系统检查到「支持常亮显示」却「不支持常亮时间显示」（j8/Omm6s1lsmTDFsXjsBfA = 0），就会把整组判定为不支持，界面上表现为开关自己弹回去。这也是为什么重进 App 一看又是关闭的——它读的是系统真实值，而系统不认那半组配置。
 
-        所以修复不是「关掉 AOD」这么粗暴：先把轻点唤醒强制置 1，再清掉多余的 AOD 鲜艳度键（真机 AOD 机型有专门的显示管线支持它，强开的机器没有），保留基础 AOD 键。执行后重启设备验证。
+        第二个问题：息屏后双击不亮。这对应 DeviceSupportsTapToWake（yZf3GTRMGTuwSV/lD7Cagw），它必须同时为 1。
+
+        所以修复是把四个键一次性写成一致的状态：AOD=1、AOTime=1、AODVibrancy=1、TapToWake=1。写入时只有 CacheExtra 会变，其余顶层键（CacheVersion / CacheUUID / CacheData）逐字节保真，inode 与 POSIX 属性也会校验，任何一项异常都会原地回滚。
         """
     }
 
@@ -156,21 +156,26 @@ struct AODFixView: View {
         status = "已读取 \(result.count) 个相关键"
     }
 
-    /// 完整修复：轻点唤醒置 1，移除 AOD 鲜艳度。
+    /// 完整修复：照 Erosion 的绑定逻辑，AOD 必须 AOD + AOTime 一起置 1
+    /// （只写 AOD 一个键，系统会因为缺少时间显示能力而把整项判定为不支持），
+    /// 同时把 TapToWake 补成 1，解决息屏后双击不亮。
     private func applyFix() {
         busy = true
         defer { busy = false }
         guard ensureAccess() else { return }
-        // 鲜艳度需要真实 AOD 显示管线，强开的机器保留它反而会锁死显示状态，这里清掉
-        let removals = values[AODKeys.aodVibrancy] != nil ? [AODKeys.aodVibrancy] : []
+        let edits: [String: Any] = [
+            AODKeys.aod: 1,
+            AODKeys.aodTime: 1,
+            AODKeys.aodVibrancy: 1,
+            AODKeys.tapToWake: 1
+        ]
         do {
-            let before = try GestaltService.applyCacheExtra([AODKeys.tapToWake: 1],
-                                                            removing: removals,
+            let before = try GestaltService.applyCacheExtra(edits,
                                                             workspace: app.workspace,
-                                                            note: "AOD 双击唤醒修复")
+                                                            note: "AOD + 双击唤醒完整修复")
             savePreApply(before)
-            append("已写入：TapToWake = 1" + (removals.isEmpty ? "" : "，并移除 AODVibrancy"))
-            append("请注销或重启后验证息屏双击")
+            append("已写入：AOD=1, AOTime=1, AODVibrancy=1, TapToWake=1")
+            append("请注销或重启后验证")
             refresh()
             confirmRespring()
         } catch {
@@ -178,17 +183,19 @@ struct AODFixView: View {
         }
     }
 
-    /// 保守修复：只动轻点唤醒。
+    /// 保守修复：只开 AOD 与轻点唤醒，不动鲜艳度。
     private func applyMinimal() {
         busy = true
         defer { busy = false }
         guard ensureAccess() else { return }
         do {
-            let before = try GestaltService.applyCacheExtra([AODKeys.tapToWake: 1],
+            let before = try GestaltService.applyCacheExtra([AODKeys.aod: 1,
+                                                            AODKeys.aodTime: 1,
+                                                            AODKeys.tapToWake: 1],
                                                             workspace: app.workspace,
-                                                            note: "仅置 TapToWake")
+                                                            note: "AOD + TapToWake")
             savePreApply(before)
-            append("已写入：TapToWake = 1（未改动 AOD 键）")
+            append("已写入：AOD=1, AOTime=1, TapToWake=1")
             refresh()
             confirmRespring()
         } catch {
