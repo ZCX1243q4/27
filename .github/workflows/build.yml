@@ -49,6 +49,7 @@ jobs:
           cp -R "$APP" Payload/
           zip -qry iOSTweaksToolbox.ipa Payload
           ls -lh iOSTweaksToolbox.ipa
+          echo "STAMP=$(date +%Y%m%d-%H%M%S)" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         if: steps.build.outcome == 'success'
@@ -57,11 +58,27 @@ jobs:
           path: iOSTweaksToolbox.ipa
           if-no-files-found: error
 
+      - name: Publish Release with IPA
+        if: steps.build.outcome == 'success'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ env.STAMP }}
+          name: iOSTweaksToolbox ${{ env.STAMP }}
+          body: |
+            自动构建产物（未签名 IPA）。
+
+            用你自己的证书重签后安装。签名必须保留 App Group 权限
+            （com.apple.security.application-groups），否则 worse_query 无法工作。
+
+            装好后先进入「诊断与日志 → 真机自检」。
+          files: iOSTweaksToolbox.ipa
+          make_latest: true
+
       - name: Publish build log on failure
         if: steps.build.outcome != 'success'
         run: |
-          grep -E "error:|错误:" build.log | head -80 > ci-errors.txt || true
-          echo "=== first 80 errors ===" >> ci-errors.txt
+          grep -E "error:" build.log | head -80 > ci-errors.txt || true
+          echo "=== tail ===" >> ci-errors.txt
           bash -c 'tail -c 20000 build.log >> ci-errors.txt'
           git config user.name "ci"
           git config user.email "ci@example.com"
