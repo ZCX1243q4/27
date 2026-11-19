@@ -40,7 +40,7 @@ enum RespringDocument {
                                 let x = new Uint8Array(1024 * 1024 * 10);
                                 crypto.getRandomValues(x);
                             }, 0);
-                        <\/script>
+                        <\\/script>
                     </body>
                     </html>
                 `;

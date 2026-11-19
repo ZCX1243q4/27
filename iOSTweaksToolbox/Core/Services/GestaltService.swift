@@ -158,6 +158,64 @@ enum GestaltService {
         return before
     }
 
+    /// 真实修改机型几何：ArtworkTraits 里的 SubType 决定屏幕几何特征，
+    /// ProductType 决定机型标识。这两项是"改分辨率 / 挪灵动岛"的实际杠杆。
+    @discardableResult
+    static func applyDeviceProfile(subtype: Int?,
+                                   deviceName: String?,
+                                   productType: String?,
+                                   workspace: WorkspacePaths,
+                                   note: String) throws -> Data {
+        let url = URL(fileURLWithPath: MGPath.systemGestalt)
+        guard let before = try? Data(contentsOf: url) else { throw WriteError.noOriginal }
+        guard var dict = parse(before) else { throw WriteError.invalidPlist("当前文件无法解析") }
+        var extra = (dict["CacheExtra"] as? [String: Any]) ?? [:]
+
+        if let subtype {
+            guard var artwork = extra["oPeik/9e8lQWMszEjbPzng"] as? [String: Any] else {
+                throw WriteError.invalidPlist("ArtworkTraits 缺失，为防丢失屏幕特征已拦截写入")
+            }
+            artwork["ArtworkDeviceSubType"] = subtype
+            if let deviceName, !deviceName.isEmpty {
+                artwork["ArtworkDeviceProductDescription"] = deviceName
+            }
+            extra["oPeik/9e8lQWMszEjbPzng"] = artwork
+        }
+        if let deviceName, !deviceName.isEmpty {
+            extra["Z/dqyWS6OZTRy10UcmUAhw"] = deviceName
+            extra["bbtR9jQx50Fv5Af/affNtA"] = deviceName
+        }
+        if let productType, !productType.isEmpty {
+            extra["h9jDsbgj7xIVeIQ8S3/X3Q"] = productType
+        }
+
+        dict["CacheExtra"] = extra
+        guard let after = try? PropertyListSerialization.data(fromPropertyList: dict,
+                                                              format: .binary,
+                                                              options: 0) else {
+            throw WriteError.invalidPlist("序列化失败")
+        }
+        let dir = containerDirectory(workspace)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try? before.write(to: dir.appendingPathComponent("before-\(EventLog.stamp()).plist"), options: .atomic)
+
+        try writeInPlace(after, to: url)
+        return before
+    }
+
+    /// 读取当前 ArtworkTraits 与 ProductType。
+    static func readDeviceProfile() -> (subtype: Int?, deviceName: String, productType: String) {
+        guard let snapshot = readSystem(), let dict = parse(snapshot.data),
+              let extra = dict["CacheExtra"] as? [String: Any] else {
+            return (nil, "", "")
+        }
+        let artwork = extra["oPeik/9e8lQWMszEjbPzng"] as? [String: Any]
+        let subtype = (artwork?["ArtworkDeviceSubType"] as? NSNumber)?.intValue
+        let name = (artwork?["ArtworkDeviceProductDescription"] as? String) ?? ""
+        let product = (extra["h9jDsbgj7xIVeIQ8S3/X3Q"] as? String) ?? ""
+        return (subtype, name, product)
+    }
+
     /// 读取 CacheExtra 里若干键的当前值。
     static func readCacheExtra(_ keys: [String]) -> [String: Any] {
         guard let snapshot = readSystem(), let dict = parse(snapshot.data),

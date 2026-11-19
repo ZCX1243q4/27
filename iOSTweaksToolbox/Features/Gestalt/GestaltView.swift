@@ -52,6 +52,14 @@ struct GestaltView: View {
             }
 
             Section {
+                NavigationLink {
+                    DeviceProfileView()
+                } label: {
+                    Label("设备几何特征（SubType / ProductType）", systemImage: "rectangle.inset.filled")
+                }
+            }
+
+            Section {
                 Button {
                     load()
                 } label: {
