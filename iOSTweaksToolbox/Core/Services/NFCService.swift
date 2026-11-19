@@ -120,7 +120,7 @@ extension NFCScanner: NFCNDEFReaderSessionDelegate {
                 case .nfcWellKnown:
                     if let url = record.wellKnownTypeURIPayload() {
                         text = url.absoluteString
-                    } else if let (value, _) = record.wellKnownTypeTextPayload() {
+                    } else if let value = record.wellKnownTypeTextPayload().0 {
                         text = value
                     } else {
                         text = record.payload.map { String(format: "%02X", $0) }.joined(separator: " ")
@@ -206,20 +206,18 @@ extension NFCScanner: NFCTagReaderSessionDelegate {
             case .unknown: family = "MIFARE（未知子类型）"
             @unknown default: family = "MIFARE"
             }
-            let info = "历史字节 \(mifare.historicalBytes?.count ?? 0) 字节；" +
-                       "容量 \(mifare.capacity) 字节；" +
-                       "可写 \(mifare.isWritable ? "是" : "否")"
+            let history = mifare.historicalBytes.map { "\($0.count) 字节" } ?? "无"
+            let info = "历史字节 \(history)；家族 \(family)"
             return (uid, ["ISO14443", family], info)
         case .iso7816(let iso):
             let uid = iso.identifier.map { String(format: "%02X", $0) }.joined()
-            let info = "历史字节 \(iso.historicalBytes.count) 字节；" +
-                       "应用数据 \(iso.applicationData?.count ?? 0) 字节"
+            let appLen = iso.applicationData?.count ?? 0
+            let info = "历史字节 \(iso.historicalBytes.count) 字节；应用数据 \(appLen) 字节"
             return (uid, ["ISO14443", "ISO7816"], info)
         case .iso15693(let v):
             let uid = v.identifier.map { String(format: "%02X", $0) }.joined()
-            let info = "IC 序列号 \(v.icSerialNumber.map { String(format: "%02X", $0) }.joined())；" +
-                       "制造商 \(v.manufacturerCode) 字节"
-            return (uid, ["ISO15693"], info)
+            let ic = v.icSerialNumber.map { String(format: "%02X", $0) }.joined()
+            return (uid, ["ISO15693"], "IC 序列号 \(ic)；响应标志 \(v.responseFlags)")
         case .feliCa(let felica):
             let idm = felica.currentIDm.map { String(format: "%02X", $0) }.joined()
             return (idm, ["FeliCa"], "系统码 \(felica.currentSystemCode)")
@@ -228,30 +226,7 @@ extension NFCScanner: NFCTagReaderSessionDelegate {
         }
     }
 
-    nonisolated static func readNDEF(_ tag: NFCTag) -> [NFCNDEFRecord] {
-        // 只有 MIFARE / ISO7816 在连上后能直接读 NDEF 缓存
-        let message: NFCNDEFMessage?
-        switch tag {
-        case .miFare(let mifare):
-            message = try? mifare.cachedNDEFMessage()
-        case .iso7816(let iso):
-            message = try? iso.cachedNDEFMessage()
-        case .iso15693(let v):
-            message = try? v.cachedNDEFMessage()
-        default:
-            message = nil
-        }
-        guard let message else { return [] }
-        return message.records.map { record in
-            let type = String(data: record.type, encoding: .utf8)
-                ?? record.type.map { String(format: "%02X", $0) }.joined()
-            let text = record.wellKnownTypeURIPayload()?.absoluteString
-                ?? record.wellKnownTypeTextPayload()?.0
-                ?? record.payload.map { String(format: "%02X", $0) }.joined(separator: " ")
-            return NFCNDEFRecord(typeNameFormat: "\(record.typeNameFormat.rawValue)",
-                                 type: type,
-                                 payloadText: text,
-                                 payloadSize: record.payload.count)
-        }
-    }
+    /// 标签会话只负责 UID 与技术信息；NDEF 内容走单独的 NDEF 会话读，
+    /// 因为 cachedNDEFMessage 不在 NFCTag 各协议里。
+    nonisolated static func readNDEF(_ tag: NFCTag) -> [NFCNDEFRecord] { [] }
 }
