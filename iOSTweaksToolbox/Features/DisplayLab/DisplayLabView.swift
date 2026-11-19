@@ -83,6 +83,16 @@ struct DisplayLabView: View {
             }
 
             Section {
+                NavigationLink {
+                    IslandGeometryView()
+                } label: {
+                    Label("写入真实屏幕几何（SubType）", systemImage: "rectangle.inset.filled")
+                }
+            } footer: {
+                Text("上面滑杆调的是 App 内模拟参数。真正改变系统屏幕几何要写 MobileGestalt 的 ArtworkTraits.SubType，点进去操作。")
+            }
+
+            Section {
                 Button {
                     exportReport()
                 } label: {

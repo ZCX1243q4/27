@@ -88,7 +88,17 @@ struct IslandStudioView: View {
             }
 
             Section {
-                Text("普通未越狱 App 没有公开接口去移动 SpringBoard 里的灵动岛。这里的参数是可保存、可导出的研究数据；要真正影响系统布局，需要能改到系统级显示配置的权限，本工具不会把预览当成已生效。")
+                NavigationLink {
+                    IslandGeometryView()
+                } label: {
+                    Label("写入真实几何特征（SubType）", systemImage: "rectangle.inset.filled")
+                }
+            } footer: {
+                Text("上面的滑杆只作用于 App 内预览。真正影响 SpringBoard 的是 MobileGestalt 里的 ArtworkTraits.SubType —— 点进去可以把它写进系统缓存，注销后生效。")
+            }
+
+            Section {
+                Text("限制说明：SubType 是预设的屏幕几何档位，只能在系统已有的档位之间切换，不能任意指定像素偏移。滑杆里的 width / height / cornerRadius 没有对应的系统字段，因此永远只用于预览。")
                     .font(.footnote).foregroundStyle(.secondary)
             }
         }
