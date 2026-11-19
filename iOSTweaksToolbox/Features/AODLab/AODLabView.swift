@@ -13,6 +13,20 @@ struct AODLabView: View {
     var body: some View {
         List {
             Section {
+                NavigationLink {
+                    AODFixView()
+                } label: {
+                    HStack {
+                        Image(systemName: "wrench.adjustable")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("AOD 双击唤醒修复").font(.footnote.weight(.medium))
+                            Text("检测 TapToWake / AOD 相关键并写入修复").font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            Section {
                 Text("工具能记录的是 App 侧观察到的应用生命周期事件。系统级息屏、锁屏触摸事件在未越狱环境下不可获取——这些项目会明确标注为「不可采集」，不会用推测值填充。")
                     .font(.footnote).foregroundStyle(.secondary)
             }

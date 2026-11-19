@@ -127,6 +127,46 @@ enum GestaltService {
         }
     }
 
+    /// 读取当前系统文件 → 合并 CacheExtra 改动 → 快照 → 原位写入。
+    /// 返回写入前的原始字节（供调用方回滚）。
+    @discardableResult
+    static func applyCacheExtra(_ edits: [String: Any],
+                                removing removals: [String] = [],
+                                workspace: WorkspacePaths,
+                                note: String) throws -> Data {
+        try checkEdits(edits)
+        let url = URL(fileURLWithPath: MGPath.systemGestalt)
+        guard let before = try? Data(contentsOf: url) else { throw WriteError.noOriginal }
+        guard var dict = parse(before) else { throw WriteError.invalidPlist("当前文件无法解析") }
+
+        var extra = (dict["CacheExtra"] as? [String: Any]) ?? [:]
+        for (key, value) in edits { extra[key] = value }
+        for key in removals { extra.removeValue(forKey: key) }
+        dict["CacheExtra"] = extra
+
+        guard let after = try? PropertyListSerialization.data(fromPropertyList: dict,
+                                                              format: .binary,
+                                                              options: 0) else {
+            throw WriteError.invalidPlist("序列化失败")
+        }
+        let dir = containerDirectory(workspace)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let snap = dir.appendingPathComponent("before-\(EventLog.stamp()).plist")
+        try? before.write(to: snap, options: .atomic)
+
+        try writeInPlace(after, to: url)
+        return before
+    }
+
+    /// 读取 CacheExtra 里若干键的当前值。
+    static func readCacheExtra(_ keys: [String]) -> [String: Any] {
+        guard let snapshot = readSystem(), let dict = parse(snapshot.data),
+              let extra = dict["CacheExtra"] as? [String: Any] else { return [:] }
+        var result: [String: Any] = [:]
+        for key in keys where extra[key] != nil { result[key] = extra[key] }
+        return result
+    }
+
     /// 写入前检查待改键是否落在黑名单里。
     static func checkEdits(_ edits: [String: Any]) throws {
         for key in edits.keys {
