@@ -127,12 +127,15 @@ final class AppState: ObservableObject {
 
     @Published var bootstrapped = false
     @Published var path: [AppModule] = []
-    /// 置 true 会弹出注销遮罩并触发 SpringBoard 重启。
+    /// 置 true 会弹出注销遮罩并尝试触发 SpringBoard 重启。
     @Published var shouldRespring = false
+    /// 注销尝试失败（超时仍在本 App 内）。
+    @Published var respringFailed = false
 
     /// 需要注销才生效的改动统一走这里。
     func respring(_ reason: String) {
-        log.warn("注销以应用改动：\(reason)")
+        log.warn("尝试注销以应用改动：\(reason)")
+        respringFailed = false
         shouldRespring = true
     }
 

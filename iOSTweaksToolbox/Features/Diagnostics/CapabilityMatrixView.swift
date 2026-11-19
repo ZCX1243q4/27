@@ -33,6 +33,14 @@ struct CapabilityMatrixView: View {
                 }
             }
 
+            Section {
+                NavigationLink {
+                    SelfCheckView()
+                } label: {
+                    Label("真机自检（逐项显示返回码）", systemImage: "stethoscope")
+                }
+            }
+
             Section("版本窗口") {
                 KeyValueRow(key: "当前系统", value: "iOS \(OSCompatibility.systemVersion) (\(OSCompatibility.build))")
                 KeyValueRow(key: "机型标识", value: OSCompatibility.model)
