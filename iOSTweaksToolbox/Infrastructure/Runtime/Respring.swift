@@ -39,7 +39,7 @@ enum RespringDocument {
                                 let x = new Uint8Array(1024 * 1024 * 16);
                                 crypto.getRandomValues(x);
                             }, 0);
-                        <\/script>
+                        ${'</scr' + 'ipt>'}
                     </body>
                     </html>
                 `;
