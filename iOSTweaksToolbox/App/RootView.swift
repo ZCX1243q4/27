@@ -27,6 +27,7 @@ struct RootView: View {
         case .dynamicIsland: IslandStudioView()
         case .displayLab: DisplayLabView()
         case .aodLab: AODLabView()
+        case .gestalt: GestaltView()
         case .deviceIdentity: DeviceIdentityView()
         case .fileManager: FileBrowserView()
         case .backup: BackupCenterView()

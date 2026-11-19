@@ -19,6 +19,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
     case dynamicIsland
     case displayLab
     case aodLab
+    case gestalt
     case deviceIdentity
     case fileManager
     case backup
@@ -37,6 +38,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .dynamicIsland: return "灵动岛工作室"
         case .displayLab: return "显示分辨率实验室"
         case .aodLab: return "AOD 实验室"
+        case .gestalt: return "MobileGestalt 缓存"
         case .deviceIdentity: return "设备身份管理"
         case .fileManager: return "文件管理器"
         case .backup: return "备份与恢复"
@@ -55,6 +57,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .dynamicIsland: return "位置、尺寸、圆角与展开状态模拟"
         case .displayLab: return "读取真实屏幕参数，建立自定义显示方案"
         case .aodLab: return "AOD 开关前后行为记录与配置差异诊断"
+        case .gestalt: return "系统能力缓存：读取、备份、键值编辑与安全写入"
         case .deviceIdentity: return "按 App 记录目标设备身份（研究用配置）"
         case .fileManager: return "沙盒、App Group 与用户授权目录"
         case .backup: return "SHA-256 校验、快照与恢复"
@@ -73,6 +76,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
         case .dynamicIsland: return "capsule.portrait"
         case .displayLab: return "rectangle.on.rectangle"
         case .aodLab: return "moon.stars"
+        case .gestalt: return "slider.horizontal.3"
         case .deviceIdentity: return "person.badge.key"
         case .fileManager: return "folder"
         case .backup: return "arrow.triangle.2.circlepath"
@@ -85,7 +89,7 @@ enum AppModule: String, CaseIterable, Identifiable, Hashable {
     var priority: ModulePriority {
         switch self {
         case .configurationEditor, .profileManager, .jsonEditor, .hexEditor,
-             .dynamicIsland, .displayLab, .aodLab, .deviceIdentity:
+             .dynamicIsland, .displayLab, .aodLab, .gestalt, .deviceIdentity:
             return .p0
         case .fileManager, .backup, .deviceInfo:
             return .p1
