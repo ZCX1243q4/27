@@ -211,13 +211,14 @@ extension NFCScanner: NFCTagReaderSessionDelegate {
             return (uid, ["ISO14443", family], info)
         case .iso7816(let iso):
             let uid = iso.identifier.map { String(format: "%02X", $0) }.joined()
+            let historyLen = iso.historicalBytes?.count ?? 0
             let appLen = iso.applicationData?.count ?? 0
-            let info = "历史字节 \(iso.historicalBytes.count) 字节；应用数据 \(appLen) 字节"
+            let info = "历史字节 \(historyLen) 字节；应用数据 \(appLen) 字节"
             return (uid, ["ISO14443", "ISO7816"], info)
         case .iso15693(let v):
             let uid = v.identifier.map { String(format: "%02X", $0) }.joined()
             let ic = v.icSerialNumber.map { String(format: "%02X", $0) }.joined()
-            return (uid, ["ISO15693"], "IC 序列号 \(ic)；响应标志 \(v.responseFlags)")
+            return (uid, ["ISO15693"], "IC 序列号 \(ic)")
         case .feliCa(let felica):
             let idm = felica.currentIDm.map { String(format: "%02X", $0) }.joined()
             return (idm, ["FeliCa"], "系统码 \(felica.currentSystemCode)")
