@@ -60,6 +60,16 @@ struct AODFixView: View {
             }
 
             Section {
+                NavigationLink {
+                    AODMatrixView()
+                } label: {
+                    Label("逐项排除：定位是哪个键破坏双击", systemImage: "square.split.2x2")
+                }
+            } footer: {
+                Text("如果 TapToWake 本来就是 1，那它不是病因。用这一页把 AOD 的三个键拆开逐个测试。")
+            }
+
+            Section {
                 Button {
                     refresh()
                 } label: {
