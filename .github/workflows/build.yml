@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-15
@@ -22,6 +25,8 @@ jobs:
           xcodebuild -list -project iOSTweaksToolbox.xcodeproj
 
       - name: Build (unsigned)
+        id: build
+        continue-on-error: true
         run: |
           set -o pipefail
           xcodebuild \
@@ -33,9 +38,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build | tee build.log
+            build 2>&1 | tee build.log
 
       - name: Package IPA
+        if: steps.build.outcome == 'success'
         run: |
           APP=$(find build/Build/Products/Release-iphoneos -maxdepth 1 -name "*.app" | head -1)
           echo "app: $APP"
@@ -45,14 +51,22 @@ jobs:
           ls -lh iOSTweaksToolbox.ipa
 
       - uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success'
         with:
           name: iOSTweaksToolbox-ipa
           path: iOSTweaksToolbox.ipa
           if-no-files-found: error
 
-      - name: Upload logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
+      - name: Publish build log on failure
+        if: steps.build.outcome != 'success'
+        run: |
+          grep -E "error:|错误:" build.log | head -80 > ci-errors.txt || true
+          echo "=== first 80 errors ===" >> ci-errors.txt
+          bash -c 'tail -c 20000 build.log >> ci-errors.txt'
+          git config user.name "ci"
+          git config user.email "ci@example.com"
+          git checkout -B ci-log
+          git add -f ci-errors.txt
+          git commit -m "ci: build log" || true
+          git push -f origin ci-log
+          exit 1
